@@ -1,0 +1,6 @@
+services:
+  kb:
+    build: .
+    ports: ["127.0.0.1:8000:8000"]   # 仅绑定本机回环，符合"本地部署"
+    env_file: [.env]
+    volumes: ["./data:/data"]

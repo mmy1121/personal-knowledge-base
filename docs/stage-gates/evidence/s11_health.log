@@ -1,0 +1,1 @@
+{"code":200,"msg":"success","data":{"status":"up","version":"0.1.0","llm_provider":"mock","embedding_mode":"mock","vector_store":"float16-blob+numpy","auto_process":true,"documents":0,"chunks":0,"by_status":{}}}curl_exit=0

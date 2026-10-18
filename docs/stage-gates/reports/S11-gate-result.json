@@ -1,0 +1,38 @@
+{
+  "stage_id": "S11",
+  "stage_name": "演示与交付",
+  "contract_path": "docs/stage-gates/stage-11.contract.md",
+  "revision": "无 Git 仓库；版本标识=work/ 目录文件状态，证据见 docs/stage-gates/evidence/",
+  "target_environment": "Windows 11 Pro 10.0.22631 / Python 3.12.10 (work/venv)",
+  "verified_at": "2026-10-18T12:16:54+08:00",
+  "independent_verification": false,
+  "acceptance_results": [
+    {"id": "AC-01", "level": "MUST", "status": "PASS",
+     "execution": "uvicorn app.main:app 在临时端口 8765 真实启动，curl /api/v1/health",
+     "actual_result": "返回 200 统一响应格式 {code:200,msg:success,data:{status:up,...}}，curl 退出码 0",
+     "evidence_paths": ["docs/stage-gates/evidence/s11_backend_start.log", "docs/stage-gates/evidence/s11_health.log"]},
+    {"id": "AC-02", "level": "MUST", "status": "PASS",
+     "execution": "work/venv/Scripts/python.exe scripts/verify_floatbox_e2e.py（本轮实跑）",
+     "actual_result": "通过 6 / 失败 0，退出码 0（记事本作为第三方窗口的热键唤起、前台聚焦、Ctrl+Enter 入库 float_window 文档、后端关闭文本保留等）",
+     "evidence_paths": ["docs/stage-gates/evidence/s11_floatbox_e2e.log"]},
+    {"id": "AC-03", "level": "MUST", "status": "BLOCKED",
+     "execution": "未执行：需用户本人在浏览器/Word/微信中操作悬浮框",
+     "actual_result": "本轮没有用户确认通过的证据；自动化 E2E 仅覆盖记事本，不能替代第三方应用人工验收",
+     "evidence_paths": []},
+    {"id": "AC-04", "level": "SHOULD", "status": "PASS",
+     "execution": "核对 work/.gitignore 与 README；缺少说明处已补充 README「交付物与打包排除」一节",
+     "actual_result": ".gitignore 含 venv/ ext_dl/ ext_data/ data/ .env；README 第 103 行起说明交付物与排除项",
+     "evidence_paths": ["work/.gitignore", "work/README.md"]}
+  ],
+  "defects": [
+    {"id": "BLK-01", "priority": "P1", "description": "悬浮框第三方应用人工验收（FR-3 验收 1~4）无用户确认证据", "blocks_next_stage": true,
+     "mitigation_or_followup": "用户在浏览器、Word、微信中亲自验证热键唤起、聚焦、Ctrl+Enter 存入后书面确认，再重跑 S11 REVIEW"},
+    {"id": "DEBT-01", "priority": "P2", "description": "真实 LLM 路径本轮未实测（承接 S10）", "blocks_next_stage": false,
+     "mitigation_or_followup": "提供新 key 后重跑 verify_llm_real.py；旧 key 已泄露需作废"}
+  ],
+  "gate_decision": "BLOCKED",
+  "can_advance": false,
+  "blocking_reasons": ["AC-03 MUST 人工验收缺少用户确认，Agent 无法在真实第三方应用前代为操作"],
+  "next_stage": null,
+  "notes": "S11 是最终交付阶段，无后续阶段；BLOCKED 表示不得宣称已验收/可最终交付。无独立验证 Agent。"
+}

@@ -1,0 +1,42 @@
+{
+  "stage_id": "S10",
+  "stage_name": "评估实验与对比材料",
+  "contract_path": "docs/stage-gates/stage-10.contract.md",
+  "revision": "无 Git 仓库；版本标识=work/ 目录文件状态（verify_all 19 脚本 307 项），证据见 docs/stage-gates/evidence/",
+  "target_environment": "Windows 11 Pro 10.0.22631 / Python 3.12.10 (work\venv)",
+  "verified_at": "2026-10-18T12:14:19+08:00",
+  "independent_verification": false,
+  "acceptance_results": [
+    {"id": "AC-01", "level": "MUST", "status": "PASS",
+     "execution": "cd work && venv\Scripts\python.exe scripts\verify_all.py（本轮后台实时执行）",
+     "actual_result": "退出码 0；通过 307 项，失败 0 项，脚本 19 个",
+     "evidence_paths": ["docs/stage-gates/evidence/verify_all_run1.log"]},
+    {"id": "AC-02", "level": "MUST", "status": "PASS",
+     "execution": "逐项比对 README 评估一节、对比实验结果.md 与 work/eval_*_result.md 快照中的数字",
+     "actual_result": "cmrc、头条、LCSTS、修正反馈的数字与结果文件一致；对比实验 cmrc 延迟(19/24ms)与单独评估(18/23ms)因分次运行略有差异，仅延迟列，不影响结论；对比实验头条为 750 篇，与 eval_real_data 的 1500 篇是不同语料，文档已分别标注",
+     "evidence_paths": ["docs/stage-gates/evidence/result_files_snapshot.log"]},
+    {"id": "AC-03", "level": "MUST", "status": "PASS",
+     "execution": "审阅对比实验结果.md 与 README 的局限声明",
+     "actual_result": "含竞品待核实、范式基线非产品实测、替身 LLM、单次运行、LCSTS 指标局限、修正反馈不宣称提升等声明",
+     "evidence_paths": ["对比实验结果.md", "work/README.md"]},
+    {"id": "AC-04", "level": "SHOULD", "status": "PASS",
+     "execution": "用户提供新 key 后，仅以进程环境变量传入（未写入任何文件），重跑 scripts/verify_llm_real.py（2026-10-18 12:32 本轮实跑）",
+     "actual_result": "通过 14 / 失败 0，退出码 0；覆盖 DeepSeek 与 OpenAI 兼容 Provider 的摘要/要点/标签/分类，以及 3 篇文档真实流水线 stored。注：首次 verify_all 运行时无 key，该脚本计 0 项（verify_all_run1.log），本条为后续补测证据",
+     "evidence_paths": ["docs/stage-gates/evidence/s10_llm_real_rerun.log", "docs/stage-gates/evidence/verify_all_run1.log"]},
+    {"id": "AC-05", "level": "SHOULD", "status": "PASS",
+     "execution": "grep -rIl -E sk-[A-Za-z0-9]{20,} 排除 venv/ext_dl/ext_data",
+     "actual_result": "无命中文件（grep 退出码 1 表示无匹配）",
+     "evidence_paths": ["docs/stage-gates/evidence/secret_scan.log"]}
+  ],
+  "defects": [
+    {"id": "DEBT-01", "priority": "P2", "description": "已关闭：用户提供新 key 后，verify_llm_real.py 本轮补测 14/14 通过（evidence/s10_llm_real_rerun.log）。残留事项：该 key 已在聊天记录中出现，演示或提交后建议作废并重新生成；verify_all 的整体回归日志仍是无 key 时的运行（该脚本计 0 项）", "blocks_next_stage": false,
+     "mitigation_or_followup": "提交前作废该 key；如需整体证据，带 key 以环境变量重跑 verify_all"},
+    {"id": "DEBT-02", "priority": "P2", "description": "对比表中竞品三项仍为待核实；实验均为单次运行无置信区间", "blocks_next_stage": false,
+     "mitigation_or_followup": "答辩前对照官方页面核实；可选多随机种子重跑"}
+  ],
+  "gate_decision": "CONDITIONAL_PASS",
+  "can_advance": true,
+  "blocking_reasons": [],
+  "next_stage": "S11",
+  "notes": "无独立验证 Agent，验证步骤为同一工作流重新运行并读取产物。S11 的悬浮框人工验收无法由 Agent 完成，预期 BLOCKED。"
+}

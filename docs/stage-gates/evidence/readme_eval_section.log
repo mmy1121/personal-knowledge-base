@@ -1,0 +1,24 @@
+## 评估
+
+- `scripts/eval_semantic.py`：12 篇小语料，近义查询 bge-small-zh Recall@3/MRR=1.00，Mock 与词面基线 0.56。
+- `scripts/eval_real_data.py`：今日头条 1500 篇、300 查询，Recall@5：关键词 0.167 / 语义 0.270 / 混合 0.263，混合 MRR 最高 0.192（结果见 `eval_real_data_result.md`）。
+
+- `scripts/eval_llm_classify.py`：真实 DeepSeek 对头条数据集 15 类各 4 条共 60 条做分类，准确率 45/60 = 0.750（调用失败 0）；国际类 0/4 被误判为故事，头条类别本身存在重叠（股票/财经、故事/文化），属保守估计，详见 `eval_llm_classify_result.md`。
+- `scripts/eval_cmrc_long.py`：公开数据集 jinaai/longcontext-cmrc2018-zh（1149 篇长文本语料，300 条自然语言问题，每问有标准答案文档）。Recall@5：关键词 0.990 / 语义 0.837 / 混合 0.943；MRR：0.891 / 0.720 / 0.826。问题与原文用词高度重合，关键词路占优，与头条数据集（用词不同，语义路占优）形成互补对照，结果见 `eval_cmrc_long_result.md`。
+- `scripts/eval_summary_lcsts.py`：LCSTS 公开摘要集（valid.jsonl，8685 条带参考摘要）抽 50 条，Mock 基线（取开头 100 字）ROUGE-1 召回 0.644 / F1 0.204，真实 DeepSeek 为 0.633 / 0.200，ROUGE-2 F1 0.128 / 0.116。参考摘要仅约 18 字、本系统摘要约 100 字，字级 ROUGE 对长摘要不利且无法体现语义概括质量，该结果只说明 DeepSeek 在此指标上未优于开头截取，不能据此判定摘要质量，需人工抽检或 LLM 评审补充，详见 `eval_summary_lcsts_result.md`。
+
+## 备份
+
+数据即 `data/kb.db` 单文件；备份时请先停止后端，或使用 `sqlite3 kb.db ".backup backup.db"`。
+
+## 已知限制
+
+- DeepSeek / OpenAI 兼容 Provider 已真实联调通过（14 项）；DeepSeek / OpenAI 兼容 / Ollama 三种 Provider 均已真实联调（Ollama 使用 qwen2.5:1.5b，19 项通过）；Mock 向量是哈希词袋，语义效果以真实 bge 评估为准。
+- 向量库为 float16 BLOB + numpy 暴力余弦（规格允许的兜底），未使用 sqlite-vec。
+- 悬浮框热键与焦点已有自动化 E2E，但尚未在浏览器、Word 等第三方应用中人工验收。
+- wangfenjin/simple 扩展（v0.7.1 Windows x64，SHA256 已校验）加载实测通过：`scripts/eval_simple_ext.py`，18 条查询 Recall@5 / MRR 均为 1.00，与 jieba 预分词持平；仅作可选对照，默认方案仍为 jieba 预分词（无需加载扩展）。结果见 `评估结果_simple扩展对照.md`。
+- 最小管理页位于 `/`（`app/static/index.html`），功能简单，仅覆盖搜索、列表、详情、改分类标签、删除。
+- token 鉴权为可选：设置环境变量 `KB_API_TOKEN` 后，除 `/api/v1/health` 与 CORS 预检外，请求须带 `X-KB-Token`（悬浮框会自动携带）；默认不设置。Host 头始终限制为本机以防 DNS rebinding。
+- corrections 已参与自动分类：新文档若与「被用户改过分类的相似文档」相似度≥CORR_MIN_SIM（默认 0.5），其修正目标分类会置顶进入候选，最终仍由 LLM 定夺（verify_v14.py，8 项）。已用头条数据集量化（eval_correction_feedback.py）：仅在修正样本极少时有微弱正收益，样本增多后无增益甚至略降，机制已验证正确，但不宣称提升准确率。
+- `scripts/compare_systems.py`：与其他检索范式对比（笔记软件式 unicode61 关键词 / 纯向量 RAG 式 / 本系统混合 RRF），含 cmrc 与头条两个数据集，另有「LLM 全故障时的数据安全」实验；结果与 NotebookLM 已核实限制的功能对比见 `../对比实验结果.md`。竞品为范式基线而非产品实测，未做多随机种子置信区间。
+- `scripts/eval_correction_feedback.py`：修正反馈量化（头条 15 类，300 篇测试，LLM 为总选首位候选的确定性替身，只评估候选排序机制）。K=每类被用户修正的篇数：K=1 关闭 0.350 / 开启 0.387（+0.037）；K=3 0.583 / 0.560（-0.023）；K=5 0.670 / 0.637（-0.033）。结论：修正反馈只在修正样本极少时有微弱正收益，样本变多后不优于纯向量候选（centroid 已能覆盖），差异在单次运行的噪声范围内，不能据此宣称提升准确率；K=0 为 0 是因为无任何分类可选，仅作起点。结果见 `eval_correction_feedback_result.md`。

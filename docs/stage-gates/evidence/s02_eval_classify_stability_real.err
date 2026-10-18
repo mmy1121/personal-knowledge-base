@@ -1,0 +1,6 @@
+C:\Users\User\Desktop\111\work\scripts\eval_classify_stability.py:4: SyntaxWarning: invalid escape sequence '\S'
+  venv\Scripts\python.exe -I -X utf8 scripts\eval_classify_stability.py
+Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\User\AppData\Local\Temp\jieba.cache
+Loading model cost 0.850 seconds.
+Prefix dict has been built successfully.

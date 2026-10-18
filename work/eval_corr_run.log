@@ -1,0 +1,18 @@
+Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\User\AppData\Local\Temp\jieba.cache
+Loading model cost 0.882 seconds.
+Prefix dict has been built successfully.
+| 0 | 0.000 | 0.000 | +0.000 |
+Traceback (most recent call last):
+  File "C:\Users\User\Desktop\111\work\scripts\eval_correction_feedback.py", line 69, in <module>
+    off = run(k, False, seeds, tests)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Desktop\111\work\scripts\eval_correction_feedback.py", line 49, in run
+    manage.update_document(conn, d, category_path=f"头条/{cat}"); conn.commit()
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Desktop\111\work\scripts\..\app\manage.py", line 69, in update_document
+    new_id = classify.create_category(conn, path)  # 可能抛 CategoryLimitError
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Desktop\111\work\scripts\..\app\classify.py", line 66, in create_category
+    raise CategoryLimitError(f"『{cur_path.rsplit('/', 1)[0]}』子分类已达上限 {MAX_CHILDREN}，请合并")
+app.classify.CategoryLimitError: 『头条』子分类已达上限 12，请合并

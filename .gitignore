@@ -1,0 +1,26 @@
+# 本机虚拟环境、外部下载物、公开数据集、本机数据库
+work/venv/
+work/ext_dl/
+work/ext_data/
+work/data/
+venv/
+ext_dl/
+ext_data/
+data/
+
+# 密钥与本机配置
+.env
+*.env
+!.env.example
+.claude/
+
+# 缓存与临时文件
+__pycache__/
+*.pyc
+*.bak
+*.db
+*.db-wal
+*.db-shm
+*.log.tmp
+.idea/
+.vscode/

@@ -1,0 +1,23 @@
+脚本                          通过    失败  状态
+verify_admin_ui.py           9     0  OK
+verify_floatbox.py           9     0  OK
+verify_floatbox_e2e.py       6     0  OK
+verify_floatbox_ui.py       16     0  OK
+verify_llm_real.py           0     0  OK
+verify_v01.py               23     0  OK
+verify_v02.py               20     0  OK
+verify_v03.py               22     0  OK
+verify_v04.py               27     0  OK
+verify_v05.py               16     0  OK
+verify_v06.py               17     0  OK
+verify_v07.py               27     0  OK
+verify_v08.py               44     0  OK
+verify_v09.py               14     0  OK
+verify_v10.py                6     0  OK
+verify_v11.py                7     0  OK
+verify_v12.py               19     0  OK
+verify_v13.py               17     0  OK
+verify_v14.py                8     0  OK
+
+合计：通过 307 项，失败 0 项，脚本 19 个
+exit=0

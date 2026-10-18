@@ -1,0 +1,7 @@
+venv/
+ext_dl/
+ext_data/
+data/
+__pycache__/
+*.pyc
+.env

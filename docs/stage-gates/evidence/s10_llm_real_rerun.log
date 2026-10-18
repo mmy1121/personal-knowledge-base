@@ -1,0 +1,24 @@
+Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\User\AppData\Local\Temp\jieba.cache
+Loading model cost 0.939 seconds.
+Prefix dict has been built successfully.
+[PASS] deepseek 摘要非空
+[PASS] deepseek 要点 1~5 条
+[PASS] deepseek 标签 1~8 个
+[PASS] deepseek 分类返回合法 action
+[PASS] deepseek 新建分类为父/子形式
+[PASS] openai兼容 摘要非空
+[PASS] openai兼容 要点 1~5 条
+[PASS] openai兼容 标签 1~8 个
+[PASS] openai兼容 分类返回合法 action
+[PASS] openai兼容 新建分类为父/子形式
+[PASS] 流水线 doc1 stored
+    技术/数据库 | 向量数据库,ChromaDB,Qdrant,sqlite-vec,余弦相似度,BM25,RRF
+[PASS] 流水线 doc2 stored
+    生活/户外活动 | 香山,爬山,日出,相机,农家菜
+[PASS] 流水线 doc3 stored
+    技术/信息检索 | RRF,倒数排名融合,BM25,余弦相似度,排名融合
+[PASS] 两篇技术文档同类或同父，爬山不同父
+
+通过 14 / 失败 0
+exit=0

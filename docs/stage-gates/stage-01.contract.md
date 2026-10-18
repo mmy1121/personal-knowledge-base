@@ -1,0 +1,48 @@
+# 阶段契约 S01：真实用户闭环（管理页补齐）
+
+```yaml
+stage_id: "S01"
+stage_name: "真实用户闭环"
+objective: "管理页可完成：查看运行模式 → 粘贴/上传录入 → 检索 → 修正 → 分类树管理 → 删除；失败时文本保留"
+derivation: "来源：下一阶段执行与验收计划.md S01；对现有 index.html 核对发现缺粘贴、上传、分类树、运行模式显示。"
+scope_in:
+  - "work/app/static/index.html 新增交互"
+  - "work/scripts/verify_admin_ui.py、verify_admin_ui2.py 浏览器自动化"
+  - "verify_all 整体回归（带 key，仅进程环境变量）"
+scope_out:
+  - "悬浮框在浏览器/Word/微信中的人工验收（仍属 S11 AC-03，需用户本人）"
+  - "分类合并 UI、Vue/Svelte 重构、多浏览器兼容"
+acceptance:
+  - id: "AC-01"
+    level: "MUST"
+    requirement: "管理页显示运行模式，并区分 Mock/本地/云端是否外发文本"
+    method: "RUN_COMMAND"
+    command: "cd work && venv\\Scripts\\python.exe scripts\\verify_admin_ui2.py"
+    expected: "11 项通过，0 失败"
+  - id: "AC-02"
+    level: "MUST"
+    requirement: "页面粘贴、文件上传（含损坏 PDF 的明确失败提示）、分类树新建/重命名/删除可用"
+    method: "RUN_COMMAND"
+    command: "同上"
+    expected: "同上"
+  - id: "AC-03"
+    level: "MUST"
+    requirement: "原有管理页流程（搜索/详情/修改/删除）无回归"
+    method: "RUN_COMMAND"
+    command: "cd work && venv\\Scripts\\python.exe scripts\\verify_admin_ui.py"
+    expected: "9 项通过，0 失败"
+  - id: "AC-04"
+    level: "MUST"
+    requirement: "整体回归 0 失败，且包含新脚本"
+    method: "RUN_COMMAND"
+    command: "cd work && venv\\Scripts\\python.exe scripts\\verify_all.py"
+    expected: "退出码 0；脚本数 20；失败 0"
+  - id: "AC-05"
+    level: "SHOULD"
+    requirement: "仓库无密钥残留"
+    method: "RUN_COMMAND"
+    command: "grep -rIl -E \"sk-[A-Za-z0-9]{20,}\" 排除 venv/ext_dl/ext_data"
+    expected: "无输出"
+risks_and_dependencies:
+  - "该阶段仅覆盖管理页；第三方应用悬浮框人工验收不在本阶段，不得据此宣称 S11 已解除阻塞"
+```

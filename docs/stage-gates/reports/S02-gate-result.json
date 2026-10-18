@@ -1,0 +1,42 @@
+{
+  "stage_id": "S02",
+  "stage_name": "评估设计（精简版）：检索分组评估 + 分类稳定性",
+  "contract_path": "docs/stage-gates/stage-02.contract.md",
+  "revision": "无 Git 仓库；版本标识=work/ 目录文件状态，证据见 docs/stage-gates/evidence/",
+  "target_environment": "Windows 11 Pro 10.0.22631 / Python 3.12.10 (work/venv)",
+  "verified_at": "2026-10-18",
+  "independent_verification": false,
+  "acceptance_results": [
+    {"id": "AC-01", "level": "MUST", "status": "PASS",
+     "execution": "venv\\Scripts\\python.exe -I -X utf8 scripts\\eval_retrieval_groups.py",
+     "actual_result": "16 篇语料、18 条查询、四组（关键词重合4/同义改写6/长问句4/专有名词4）× 关键词/语义/混合三路，输出 R@1/5/10、MRR、nDCG@10 共 15 行及误例。全部查询：关键词 R@1 0.83，语义 R@1 0.83 / MRR 0.89，混合 R@1 0.94 / MRR 0.97。同义改写组：关键词 R@1 0.50，语义 1.00，混合 0.83（混合低于纯语义）；专有名词组：语义 R@1 0.25，关键词与混合均为 1.00。混合唯一误例：“下周会不会变冷”→目标“天气”排名 2（关键词路未命中，语义路排名 1）。语料与查询量很小，仅为机制性对比，不能外推到真实笔记库",
+     "evidence_paths": ["docs/stage-gates/evidence/s02_eval_retrieval_groups.md"]},
+    {"id": "AC-02", "level": "MUST", "status": "PASS",
+     "execution": "LLM_PROVIDER=deepseek EMBEDDING_MODE=local（密钥仅经进程环境变量）运行 scripts\\eval_classify_stability.py；Mock 运行仅作机制验证",
+     "actual_result": "20 篇文档/5 个主题。规范化修复前（真实模型）：创建分类 12、复用率 11/15=0.73，每个主题后两篇被建成带全角冒号的重复分类（如“生活/烹饪：”）。修复 classify.py 路径规范化后：创建分类 8（含 3 个父分类，理想约 5 个叶子/主题）、复用率 15/15=1.00，同类聚合度各主题均为 1.00，needs_review 0。修复前数据仅记录在运行输出中，没有单独保存的证据文件；Mock 运行（13 个分类、复用 0.53）仅证明机制，不代表真实模型。单次运行、无置信区间",
+     "evidence_paths": ["docs/stage-gates/evidence/s02_eval_classify_stability.md", "docs/stage-gates/evidence/s02_eval_classify_stability_mock.md"]},
+    {"id": "AC-03", "level": "MUST", "status": "PASS",
+     "execution": "venv\\Scripts\\python.exe scripts\\verify_all.py（不带 key）",
+     "actual_result": "改动 classify.py 后 23 个脚本，352 通过，0 失败，退出码 0；verify_llm_real 因无 key 计 0 项",
+     "evidence_paths": ["docs/stage-gates/evidence/s02_verify_all_nokey.log"]},
+    {"id": "AC-04", "level": "SHOULD", "status": "PASS",
+     "execution": "grep -rIl -E sk-[A-Za-z0-9]{20,}，排除 venv/ext_dl/ext_data",
+     "actual_result": "无命中文件",
+     "evidence_paths": ["docs/stage-gates/evidence/s02_secret_scan.log"]}
+  ],
+  "defects": [
+    {"id": "DEBT-06", "priority": "P2", "description": "RRF 在同义改写组出现负收益（混合 R@1 0.83 < 纯语义 1.00），原因是关键词路无命中时仍有 AND/OR 两路低质量结果参与融合；仅 1 个误例、小语料，尚未做调权或选择策略", "blocks_next_stage": false,
+     "mitigation_or_followup": "答辩时如实说明；有余力再做更大评估集并评估是否按路召回质量降权"},
+    {"id": "DEBT-07", "priority": "P2", "description": "计划 S02 中的修正反馈开/关对照、摘要人工对照与事实一致性评估、统计不确定性分析未在本精简版完成", "blocks_next_stage": false,
+     "mitigation_or_followup": "报告中沿用既有 eval_correction_feedback 结论且不推广；摘要评估标注为未做"},
+    {"id": "DEBT-08", "priority": "P2", "description": "evidence 目录中 s02_eval_classify_stability_real.md/.err 为 EMBEDDING_MODE 取值错误（fastembed，应为 local）时的失败运行产物，内容作废", "blocks_next_stage": false,
+     "mitigation_or_followup": "引用时以 s02_eval_classify_stability.md 为准，或清理作废文件"},
+    {"id": "DEBT-04", "priority": "P2", "description": "DeepSeek key 已多次出现在聊天记录中，建议演示或提交后作废并重新生成", "blocks_next_stage": false,
+     "mitigation_or_followup": "作废并重新生成"}
+  ],
+  "gate_decision": "CONDITIONAL_PASS",
+  "can_advance": true,
+  "blocking_reasons": [],
+  "next_stage": "S04（交付与复现）；S11 悬浮框第三方应用人工验收仍需用户本人",
+  "notes": "无独立验证 Agent。评估语料很小（16 篇/18 查询、20 篇/5 主题），均为单次运行，不含置信区间或显著性结论。分类稳定性为修复缺陷后的结果，已如实记录修复前后差异。"
+}

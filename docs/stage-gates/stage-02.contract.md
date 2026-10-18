@@ -1,0 +1,40 @@
+# 阶段契约 S02（精简版）：评估设计防止误导
+
+```yaml
+stage_id: "S02"
+stage_name: "评估设计（精简版）：检索分组评估 + 分类稳定性"
+objective: "按查询类型分组报告关键词/语义/混合三路检索指标并做误例分析；用真实 LLM + 真实嵌入评估自组织分类的稳定性，并修复评估暴露的缺陷"
+scope_in:
+  - "work/scripts/eval_retrieval_groups.py（关键词重合/同义改写/长问句/专有名词四组，R@1/5/10、MRR、nDCG@10）"
+  - "work/scripts/eval_classify_stability.py（复用率、创建分类数、同类聚合度、needs_review）"
+  - "work/app/classify.py 分类路径规范化（评估暴露的全角冒号重复分类缺陷）"
+scope_out:
+  - "修正反馈开/关对照实验（沿用既有 eval_correction_feedback 结论，不在本阶段推广）"
+  - "摘要人工对照、事实一致性评估"
+  - "统计显著性与置信区间（均为单次运行，小语料）"
+acceptance:
+  - id: "AC-01"
+    level: "MUST"
+    requirement: "检索分组评估输出三路方法×四组查询的指标表，并列出混合未进 Top-1 的误例"
+    method: "RUN_COMMAND"
+    command: "cd work && venv\\Scripts\\python.exe -I -X utf8 scripts\\eval_retrieval_groups.py"
+    expected: "输出 15 行指标表与误例清单，证据 docs/stage-gates/evidence/s02_eval_retrieval_groups.md（UTF-8）"
+  - id: "AC-02"
+    level: "MUST"
+    requirement: "分类稳定性用真实 LLM（deepseek）+ 真实嵌入（EMBEDDING_MODE=local）评估；Mock 结果仅作机制验证"
+    method: "RUN_COMMAND"
+    command: "密钥仅经进程环境变量传入；eval_classify_stability.py"
+    expected: "报告创建分类数、复用率、聚合度、needs_review；缺陷修复前后均有记录"
+  - id: "AC-03"
+    level: "MUST"
+    requirement: "改动 classify.py 后一键回归不带 key 且 0 失败"
+    method: "RUN_COMMAND"
+    command: "cd work && venv\\Scripts\\python.exe scripts\\verify_all.py"
+    expected: "退出码 0；脚本 23；失败 0"
+  - id: "AC-04"
+    level: "SHOULD"
+    requirement: "仓库无密钥残留"
+    method: "RUN_COMMAND"
+    command: "grep -rIl -E \"sk-[A-Za-z0-9]{20,}\" 排除 venv/ext_dl/ext_data"
+    expected: "无输出"
+```

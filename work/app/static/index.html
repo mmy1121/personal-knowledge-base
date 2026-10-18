@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个人知识库</title>
+<style>
+  :root { --bg:#fff; --fg:#1a1a1a; --mut:#666; --bd:#ddd; --ac:#2563eb; --card:#f7f7f8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181d; --fg:#e8e8e8; --mut:#9aa0a6; --bd:#333; --ac:#6ea0ff; --card:#1f2229; }
+  }
+  body { margin:0; font:14px/1.6 system-ui,"Microsoft YaHei",sans-serif; background:var(--bg); color:var(--fg); }
+  header { padding:12px 20px; border-bottom:1px solid var(--bd); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  header h1 { font-size:16px; margin:0 12px 0 0; }
+  input,button,textarea { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--bd); border-radius:6px; padding:6px 10px; }
+  button { cursor:pointer; } button.pri { background:var(--ac); color:#fff; border-color:var(--ac); }
+  button.dan { color:#c0392b; }
+  #q { flex:1; min-width:200px; }
+  main { display:flex; gap:16px; padding:16px 20px; flex-wrap:wrap; }
+  #list { flex:1 1 380px; min-width:300px; }
+  #detail { flex:1 1 420px; min-width:300px; }
+  .item { background:var(--card); border:1px solid var(--bd); border-radius:8px; padding:10px 12px; margin-bottom:8px; cursor:pointer; }
+  .item:hover { border-color:var(--ac); }
+  .meta { color:var(--mut); font-size:12px; }
+  .tag { display:inline-block; background:var(--bg); border:1px solid var(--bd); border-radius:10px; padding:0 8px; margin:2px 4px 2px 0; font-size:12px; }
+  .st-failed { color:#c0392b; } .st-stored { color:#2e8b57; }
+  pre { white-space:pre-wrap; word-break:break-word; background:var(--card); padding:10px; border-radius:8px; max-height:320px; overflow:auto; }
+  label { display:block; margin:8px 0 2px; color:var(--mut); font-size:12px; }
+  #detail input { width:100%; box-sizing:border-box; }
+  #msg { color:var(--mut); padding:0 20px; min-height:20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>个人知识库</h1>
+  <input id="q" placeholder="自然语言检索，回车搜索">
+  <button class="pri" onclick="doSearch()">搜索</button>
+  <button onclick="loadList()">全部文档</button>
+  <input id="token" type="password" placeholder="X-KB-Token（未启用可留空）" style="width:200px">
+</header>
+<div id="msg"></div>
+<div id="mode" class="meta" style="padding:0 20px"></div>
+<details id="addpanel" style="padding:8px 20px" open>
+  <summary><b>录入</b>（粘贴文本 / 上传文件）</summary>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
+    <div style="flex:1 1 360px">
+      <input id="p_title" placeholder="标题（可留空，自动取首行）" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <textarea id="p_text" rows="5" placeholder="粘贴文本后点击保存" style="width:100%;box-sizing:border-box"></textarea>
+      <button class="pri" onclick="addText()">保存文本</button>
+    </div>
+    <div style="flex:1 1 300px">
+      <input id="p_file" type="file" accept=".txt,.md,.pdf,.docx,.xlsx">
+      <button class="pri" onclick="uploadFile()">上传文件</button>
+      <div class="meta">支持 TXT / MD / PDF / DOCX / XLSX，上限 5MB；扫描版 PDF 会提示无法提取文字。</div>
+    </div>
+    <div style="flex:1 1 300px">
+      <b>分类树</b> <button onclick="loadTree()">刷新</button> <button onclick="newCat()">新建分类</button>
+      <div id="tree" class="meta"></div>
+    </div>
+  </div>
+</details>
+<main>
+  <section id="list"></section>
+  <section id="detail"><p class="meta">点击左侧文档查看详情</p></section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function say(t){ $("msg").textContent = t || ""; }
+async function api(method, url, body){
+  const h = {"Content-Type":"application/json"};
+  if ($("token").value) h["X-KB-Token"] = $("token").value;
+  const r = await fetch(url, {method, headers:h, body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json().catch(() => ({code:r.status, msg:"响应异常"}));
+  if (j.code !== 200) throw new Error(j.msg || ("HTTP " + r.status));
+  return j.data;
+}
+function row(d){
+  const tags = (Array.isArray(d.tags) ? d.tags : (d.tags || "").split(",")).filter(Boolean).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+  return `<div class="item" onclick="openDoc(${d.id})">
+    <b>${esc(d.title)}</b>
+    <div class="meta">#${d.id} · ${esc(d.source_type)} · <span class="st-${esc(d.status)}">${esc(d.status)}</span>
+      ${d.category_path ? " · " + esc(d.category_path) : ""}${d.via ? " · 命中:" + esc(d.via.join("+")) : ""}</div>
+    <div>${esc(d.summary || d.snippet || "")}</div>${tags}</div>`;
+}
+async function loadList(){
+  try { say("加载中…"); const d = await api("GET", "/api/v1/documents?size=50");
+    $("list").innerHTML = d.items.map(row).join("") || "<p class='meta'>暂无文档</p>"; say(`共 ${d.total} 篇`);
+  } catch(e){ say("失败：" + e.message); }
+}
+async function doSearch(){
+  const q = $("q").value.trim(); if (!q) return loadList();
+  try { say("检索中…"); const d = await api("POST", "/api/v1/search", {query:q, limit:20});
+    $("list").innerHTML = d.results.map(row).join("") || "<p class='meta'>无结果</p>"; say(`命中 ${d.results.length} 条`);
+  } catch(e){ say("失败：" + e.message); }
+}
+async function openDoc(id){
+  try { const d = await api("GET", "/api/v1/documents/" + id);
+    $("detail").innerHTML = `
+      <h3>${esc(d.title)}</h3>
+      <div class="meta">#${d.id} · ${esc(d.source_type)} · ${esc(d.status)} ${d.error_message ? "· " + esc(d.error_message) : ""}</div>
+      <p>${esc(d.summary || "（暂无摘要）")}</p>
+      <label>标题</label><input id="e_title" value="${esc(d.title)}">
+      <label>分类（如 技术/数据库）</label><input id="e_cat" value="${esc(d.category_path || "")}">
+      <label>标签（逗号分隔）</label><input id="e_tags" value="${esc(d.tags || "")}">
+      <p><button class="pri" onclick="save(${d.id})">保存修改</button>
+         <button onclick="reprocess(${d.id})">重新处理</button>
+         <button class="dan" onclick="del(${d.id})">删除</button></p>
+      <label>正文</label><pre>${esc(d.clean_text)}</pre>`;
+  } catch(e){ say("失败：" + e.message); }
+}
+async function save(id){
+  const body = {title:$("e_title").value, tags:$("e_tags").value.split(/[,，]/).map(s=>s.trim()).filter(Boolean)};
+  const c = $("e_cat").value.trim(); if (c) body.category_path = c;
+  try { await api("PATCH", "/api/v1/documents/" + id, body); await openDoc(id); await loadList(); say("已保存"); }
+  catch(e){ say("保存失败：" + e.message); }
+}
+async function reprocess(id){
+  try { const r = await api("POST", `/api/v1/documents/${id}/reprocess`); say("处理结果：" + r.status); openDoc(id); loadList(); }
+  catch(e){ say("失败：" + e.message); }
+}
+async function del(id){
+  if (!confirm("确定删除？切片、向量、索引将一并清除。")) return;
+  try { await api("DELETE", "/api/v1/documents/" + id); $("detail").innerHTML = ""; await loadList(); say("已删除"); }
+  catch(e){ say("失败：" + e.message); }
+}
+async function showMode(){
+  try { const h = await api("GET", "/api/v1/health");
+    const net = h.llm_provider === "mock" ? "（Mock：无外发）" : (h.llm_provider === "ollama" ? "（本地模型：无外发）" : "（云端模型：文本会发送给模型服务）");
+    $("mode").textContent = `运行模式：LLM=${h.llm_provider} ${net} · Embedding=${h.embedding_mode} · 文档 ${h.documents} / 切片 ${h.chunks}`;
+  } catch(e){ $("mode").textContent = "运行模式获取失败：" + e.message; }
+}
+async function addText(){
+  const text = $("p_text").value;
+  if (!text.trim()) return say("请先粘贴文本");
+  const body = {text, source_type:"paste"};
+  const t = $("p_title").value.trim(); if (t) body.title = t;
+  try { const r = await api("POST", "/api/v1/documents/text", body);
+    $("p_text").value = ""; $("p_title").value = "";
+    await loadList(); showMode(); say(`已存入 #${r.doc_id}（${r.status}）`);
+  } catch(e){ say("保存失败（文本已保留）：" + e.message); }
+}
+async function uploadFile(){
+  const f = $("p_file").files[0];
+  if (!f) return say("请先选择文件");
+  const fd = new FormData(); fd.append("file", f);
+  const h = {}; if ($("token").value) h["X-KB-Token"] = $("token").value;
+  try {
+    const r = await fetch("/api/v1/documents/upload", {method:"POST", headers:h, body:fd});
+    const j = await r.json().catch(() => ({code:r.status, msg:"响应异常"}));
+    if (j.code !== 200) throw new Error(j.msg || ("HTTP " + r.status));
+    $("p_file").value = "";
+    await loadList(); showMode();
+    say(`已上传 #${j.data.doc_id}：${j.data.title}（${j.data.char_count} 字）`);
+  } catch(e){ say("上传失败：" + e.message); }
+}
+function treeHtml(nodes){
+  return "<ul style='margin:0;padding-left:18px'>" + nodes.map(n =>
+    `<li>${esc(n.name)} <span class="meta">(${n.doc_count ?? 0})</span>
+      <a href="#" onclick="renameCat(${n.id});return false">重命名</a>
+      <a href="#" onclick="delCat(${n.id});return false">删除</a>
+      ${n.children && n.children.length ? treeHtml(n.children) : ""}</li>`).join("") + "</ul>";
+}
+async function loadTree(){
+  try { const d = await api("GET", "/api/v1/categories");
+    $("tree").innerHTML = (d.tree && d.tree.length) ? treeHtml(d.tree) : "暂无分类";
+  } catch(e){ say("分类树加载失败：" + e.message); }
+}
+async function newCat(){
+  const p = prompt("新分类路径（如 技术/数据库）"); if (!p) return;
+  try { await api("POST", "/api/v1/categories", {path:p}); say("已新建"); loadTree(); }
+  catch(e){ say("失败：" + e.message); }
+}
+async function renameCat(id){
+  const n = prompt("新名称"); if (!n) return;
+  try { await api("PATCH", "/api/v1/categories/" + id, {name:n}); await loadTree(); await loadList(); say("已重命名"); }
+  catch(e){ say("失败：" + e.message); }
+}
+async function delCat(id){
+  if (!confirm("确定删除该分类？有文档时需先迁移。")) return;
+  let url = "/api/v1/categories/" + id;
+  try { await api("DELETE", url); await loadTree(); say("已删除"); }
+  catch(e){
+    const m = prompt(e.message + "\n如需迁移，请输入目标分类 id（留空取消）");
+    if (!m) return;
+    try { await api("DELETE", url + "?migrate_to=" + encodeURIComponent(m)); say("已迁移并删除"); loadTree(); loadList(); }
+    catch(e2){ say("失败：" + e2.message); }
+  }
+}
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+loadList(); loadTree(); showMode();
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+  "stage_id": "S04",
+  "stage_name": "交付与复现（精简版）：README 校准、一键启动、依赖锁定",
+  "contract_path": "docs/stage-gates/stage-04.contract.md",
+  "revision": "无 Git 仓库；版本标识=work/ 目录文件状态",
+  "target_environment": "Windows 11 Pro 10.0.22631 / Python 3.12.10 (work/venv)",
+  "verified_at": "2026-10-18",
+  "independent_verification": false,
+  "acceptance_results": [
+    {"id": "AC-01", "level": "MUST", "status": "PASS",
+     "execution": "检查 work/README.md",
+     "actual_result": "README 已写明 23 个脚本、352 项通过、0 失败（不带 key），并列出备份、恢复、重复导入脚本",
+     "evidence_paths": ["work/README.md", "docs/stage-gates/evidence/s03_verify_all_nokey_run3.log"]},
+    {"id": "AC-02", "level": "MUST", "status": "PASS",
+     "execution": "用临时库与测试端口执行 start_backend.bat 中的 uvicorn 命令",
+     "actual_result": "/api/v1/health 返回 code 200，管理页 / 返回 200。日志末尾的端口占用报错来自重复启动的第二个实例，不影响结论。start_floatbox.bat 仅写成，未做第三方应用人工验收",
+     "evidence_paths": ["work/start_backend.bat", "work/start_floatbox.bat"]},
+    {"id": "AC-03", "level": "SHOULD", "status": "PASS",
+     "execution": "pip freeze 生成 work/requirements.lock.txt，并对 docs 与 work 做密钥扫描",
+     "actual_result": "锁定文件 118 行；密钥扫描无命中",
+     "evidence_paths": ["work/requirements.lock.txt"]}
+  ],
+  "defects": [
+    {"id": "DEBT-06", "priority": "P2", "description": "未在干净机器或全新 venv 上验证按 README 从零安装；Docker 镜像未构建验证", "blocks_next_stage": false,
+     "mitigation_or_followup": "答辩前在新 venv 里按 README 走一遍"},
+    {"id": "DEBT-04", "priority": "P2", "description": "DeepSeek key 已多次出现在聊天记录中，建议演示或提交后作废并重新生成", "blocks_next_stage": false,
+     "mitigation_or_followup": "作废并重新生成"}
+  ],
+  "gate_decision": "CONDITIONAL_PASS",
+  "can_advance": true,
+  "blocking_reasons": [],
+  "next_stage": "S11（悬浮框第三方应用人工验收，需用户本人）",
+  "notes": "无独立验证 Agent。"
+}

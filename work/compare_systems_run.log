@@ -1,0 +1,18 @@
+Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\User\AppData\Local\Temp\jieba.cache
+Loading model cost 0.916 seconds.
+Prefix dict has been built successfully.
+| 方法 | Recall@1 | Recall@5 | Recall@10 | MRR | 延迟(ms) |
+|---|---|---|---|---|---|
+| A 笔记软件式（unicode61 关键词） | 0.000 | 0.000 | 0.000 | 0.000 | 0 |
+| B 纯向量 RAG 式 | 0.620 | 0.837 | 0.867 | 0.720 | 19 |
+| 本系统：jieba 关键词（不含向量） | 0.807 | 0.990 | 0.997 | 0.891 | 4 |
+| C 本系统：混合 RRF | 0.727 | 0.943 | 0.990 | 0.826 | 24 |
+| 方法 | Recall@1 | Recall@5 | Recall@10 | MRR | 延迟(ms) |
+|---|---|---|---|---|---|
+| A 笔记软件式（unicode61 关键词） | 0.007 | 0.007 | 0.007 | 0.007 | 0 |
+| B 纯向量 RAG 式 | 0.220 | 0.350 | 0.433 | 0.280 | 13 |
+| 本系统：jieba 关键词（不含向量） | 0.133 | 0.233 | 0.243 | 0.173 | 1 |
+| C 本系统：混合 RRF | 0.193 | 0.327 | 0.420 | 0.256 | 15 |
+['|---|---|---|---|', '| 本系统（数据先行） | 30（其中 failed 30） | 30 | 30 |', '| LLM 优先流程（模拟基线） | 0 | 0 | 需用户重新录入 |', '', '注：LLM 优先流程为按设计模拟，不是对某个具体产品的实测。', '']
+done
