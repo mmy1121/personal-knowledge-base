@@ -129,7 +129,10 @@ class OllamaLLM(ChatLLM):
 
 def build_llm(name: str) -> LLMProvider:
     """按 LLM_PROVIDER 构造（deepseek/openai/ollama）。mock 由 pipeline 自行处理。"""
-    env = os.environ.get
+    def env(key: str, default: str = "") -> str:
+        # .env.example 中 LLM_BASE_URL= / LLM_MODEL= 为空串，空串视为未配置，回退默认值，
+        # 否则请求地址变成 "/chat/completions" 导致 unknown url type
+        return (os.environ.get(key) or "").strip() or default
     if name == "deepseek":
         return OpenAICompatLLM(env("LLM_API_KEY", ""), env("LLM_BASE_URL", "https://api.deepseek.com"),
                                env("LLM_MODEL", "deepseek-chat"))

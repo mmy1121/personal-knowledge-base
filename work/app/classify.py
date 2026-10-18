@@ -77,12 +77,21 @@ def create_category(conn, path: str, description: str = "", is_system: int = 0) 
             n = conn.execute("SELECT COUNT(*) FROM categories WHERE parent_id=?", (parent_id,)).fetchone()[0]
             if n >= MAX_CHILDREN:
                 raise CategoryLimitError(f"『{cur_path.rsplit('/', 1)[0]}』子分类已达上限 {MAX_CHILDREN}，请合并")
-        cur = conn.execute(
-            "INSERT INTO categories(name, parent_id, path, depth, description, is_system,"
-            " created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)",
-            (name, parent_id, cur_path, depth, description if depth == len(parts) else "",
-             is_system, now, now))
-        parent_id = cid = cur.lastrowid
+        # 并发安全：多个后台线程可能同时新建同一分类（先查后插存在竞态），
+        # 撞上 path 唯一约束时视为"已被他人创建"，回查已有行即可，不让整篇文档失败。
+        import sqlite3
+        try:
+            cur = conn.execute(
+                "INSERT INTO categories(name, parent_id, path, depth, description, is_system,"
+                " created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)",
+                (name, parent_id, cur_path, depth, description if depth == len(parts) else "",
+                 is_system, now, now))
+            parent_id = cid = cur.lastrowid
+        except sqlite3.IntegrityError:
+            row = get_by_path(conn, cur_path)
+            if not row:
+                raise
+            parent_id = cid = row["id"]
     return cid
 
 
