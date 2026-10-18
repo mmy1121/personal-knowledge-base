@@ -42,7 +42,13 @@ def call(base, method, path, body=None):
 
 
 def main():
-    from playwright.sync_api import sync_playwright
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        # playwright 是可选依赖（仅管理页浏览器验证需要），未安装时跳过而不是崩溃
+        print("未安装 playwright，跳过管理页浏览器验证（pip install playwright 后可启用）")
+        print("通过 0 / 失败 0")
+        return
     tmp = tempfile.mkdtemp(prefix="kb_ui_")
     port = free_port()
     base = f"http://127.0.0.1:{port}"

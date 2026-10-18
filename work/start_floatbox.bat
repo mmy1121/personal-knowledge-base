@@ -1,10 +1,10 @@
 @echo off
-rem 启动桌面悬浮框（需先启动后端：start_backend.bat）
-rem 默认热键 Ctrl+Alt+K 呼出/隐藏，Ctrl+Enter 存入，Esc 隐藏
-rem 后端地址可用环境变量 KB_API_BASE 覆盖（默认 http://127.0.0.1:8000）
+rem Start floating box (start the backend first: start_backend.bat)
+rem Default hotkey: Ctrl+Alt+K show/hide, Ctrl+Enter save, Esc hide
+rem Backend address can be overridden by env var KB_API_BASE (default http://127.0.0.1:8000)
 cd /d "%~dp0"
 if not exist venv\Scripts\python.exe (
-  echo [错误] 未找到 venv，请先按 README 的“安装”一节创建虚拟环境并安装依赖。
+  echo [ERROR] venv not found. Follow README to create the virtual env first.
   pause
   exit /b 1
 )

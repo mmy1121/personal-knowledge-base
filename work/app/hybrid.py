@@ -26,7 +26,8 @@ def _semantic_hits(conn, query: str, embedder, top_k: int = 50) -> list[dict]:
         # 真实模型（bge-small-zh）经 scripts/calibrate_sem_threshold.py 标定：
         # 阈值 0.4 时相关保留 100%、无关误入 4%，故默认 0.4
         default_floor = "0.3" if emb.name.startswith("mock") else "0.4"
-        floor = float(os.environ.get("SEM_MIN_SIM", default_floor))
+        # .env.example 中 SEM_MIN_SIM= 为空串，空串视为未配置，否则 float("") 抛异常被吞，语义路静默失效
+        floor = float(os.environ.get("SEM_MIN_SIM", "").strip() or default_floor)
         return [h for h in hits if h["score"] >= floor]
     except Exception:
         return []

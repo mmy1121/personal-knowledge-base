@@ -1,16 +1,16 @@
 @echo off
-rem 一键启动后端（默认 Mock，无需 key、无需联网）。
-rem 如需真实 LLM，请先在本窗口手动设置环境变量，例如：
+rem Start backend. Default is Mock mode, no key needed.
+rem For real LLM, set env vars in this window first, e.g.:
 rem   set LLM_PROVIDER=deepseek
-rem   set LLM_API_KEY=你的key
-rem 密钥只经环境变量传入，切勿写进本文件或 .env 后提交。
+rem   set LLM_API_KEY=your_key
+rem Never commit keys. Use env vars or a local .env only.
 cd /d "%~dp0"
 if not exist "venv\Scripts\python.exe" (
-  echo [错误] 未找到 venv，请先按 README 的“安装”一节创建虚拟环境并安装依赖。
+  echo [ERROR] venv not found. Follow README to create the virtual env first.
   pause
   exit /b 1
 )
 if not exist "data" mkdir data
-echo 后端启动中：http://127.0.0.1:8000/ （管理页）  Ctrl+C 停止
+echo Backend starting: http://127.0.0.1:8000/  (Ctrl+C to stop)
 venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 pause
