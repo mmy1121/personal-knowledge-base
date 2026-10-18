@@ -230,6 +230,11 @@ def classify_document(conn, doc_id: int, text: str, summary: str, llm, vec: Opti
             else:
                 cat_id, path = fb["id"], fb["path"]
             needs_review = 1
+    # 幂等：LLM 调用期间文档可能已被另一处理线程/重启恢复流程归类，
+    # 此时先从旧分类退出，避免 doc_count 与 centroid 重复累计
+    prev = conn.execute("SELECT category_id FROM documents WHERE id=?", (doc_id,)).fetchone()
+    if prev and prev["category_id"] is not None:
+        remove_from_centroid(conn, prev["category_id"], vec, model)
     if vec is not None:
         add_to_centroid(conn, cat_id, vec, model)
     else:
